@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const EstablishConnection = require('./Database/Connection');
 const POST_Routes = require('./Routes/POST_Routes');
 const cors = require('cors');
+const GET_Routes = require('./Routes/GET_Routes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/', (req,res)=>{
 })
 
 app.use('/api', POST_Routes);
+app.use('/api', GET_Routes)
 
 const PORT = process.env.PORT || 5500;
 
