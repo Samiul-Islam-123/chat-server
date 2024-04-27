@@ -25,7 +25,8 @@ POST_Routes.post('/add-user', async (req, res) => {
 
         return res.json({
             success: true,
-            message: "User added successfully"
+            message: "User added successfully",
+            mongo_user_id : newUser._id
         });
     } catch (error) {
         console.error(error);
@@ -109,6 +110,10 @@ POST_Routes.post('/add-contact', async (req, res) => {
             message: "Error occured whil creating new contact"
         })
     }
+})
+
+POST_Routes.post('/accept-request', async(req,res)=>{
+    
 })
 
 
