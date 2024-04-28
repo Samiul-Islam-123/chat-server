@@ -33,7 +33,7 @@ GET_Routes.get('/my-contacts', async(req,res)=>{
             message : "Error occured"
         })
     }
-})
+});
 
 GET_Routes.get('/requests-inbox', async(req,res)=>{
    try{
@@ -63,7 +63,7 @@ GET_Routes.get('/requests-sent', async(req,res)=>{
      //console.log(myID)
      const MyRequest = await RequestModel.find({
          from : myID
-     })
+     }).populate('to')
      res.json({
          success : true,
          requests : MyRequest
