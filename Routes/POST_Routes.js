@@ -1,3 +1,4 @@
+const ChatModel = require('../Database/Models/ChatModel');
 const ContactsModel = require('../Database/Models/ContactsModel');
 const RequestModel = require('../Database/Models/Requests');
 const userModel = require('../Database/Models/UserModel');
@@ -51,8 +52,8 @@ POST_Routes.post('/send-request', async (req, res) => {
 
         //sending response
         res.json({
-            success : true,
-            message : "Request send Successfully"
+            success: true,
+            message: "Request send Successfully"
         })
     }
     catch (error) {
@@ -123,6 +124,14 @@ POST_Routes.post('/accept-request', async (req, res) => {
             // If everything is successful, delete the CurrentRequest
             await CurrentRequest.deleteOne();
 
+            //Create an empty chat Document in the Database
+            const CurrentChat = new ChatModel();
+            CurrentChat.Users.push(req.body.fromID);
+            CurrentChat.Users.push(req.body.toID);
+
+            await CurrentChat.save();
+
+
             return res.json({
                 success: true,
                 message: "Request accepted"
@@ -141,6 +150,48 @@ POST_Routes.post('/accept-request', async (req, res) => {
         });
     }
 });
+
+POST_Routes.post('/save-message', async (req, res) => {
+    try {
+        //Route for Saving Messages
+
+        const user1ID = req.body.fromID;
+        const user2ID = req.body.toID;
+        //console.log(user1ID, user2ID)
+        const ChatData = await ChatModel.findOne({
+            Users: {
+                $all: [user1ID, user2ID]
+            }
+        })
+        if (ChatData) {
+
+            ChatData.Chats.push({
+                from: user1ID,
+                to: user2ID,
+                content: req.body.content,
+                seen: false
+            })
+            await ChatData.save();
+            res.json({
+                success : true,
+                message : "Message saved successfully"
+            })
+        }
+        else {
+            res.json({
+                success: false,
+                message: "Chat not found"
+            })
+        }
+    }
+    catch (error) {
+        console.log(error);
+        res.json({
+            success: false,
+            message: "Error occured"
+        })
+    }
+})
 
 
 
