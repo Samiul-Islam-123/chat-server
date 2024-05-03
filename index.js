@@ -7,6 +7,7 @@ const GET_Routes = require('./Routes/GET_Routes');
 const http = require('http');
 const socketIo = require('socket.io');
 const { default: axios } = require('axios');
+const userModel = require('./Database/Models/UserModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,16 +43,56 @@ server.listen(PORT, async()=>{
 io.on('connection', (socket)=>{
     console.log("New user connected :)");
 
-    socket.on('test', async(request)=>{
-        const response = await axios.get(`${process.env.API_URL}/api/my-contacts`, {
-            headers : {
-                userid : request.userid
+    socket.on('get-online-status', async(data)=>{
+        //console.log(data)
+        const OnlineUser = await userModel.findOne({
+            _id : data.userID
+        })
+        if( OnlineUser.socket_id){
+            if(OnlineUser.socket_id!="")
+            {
+                
+                console.log(OnlineUser.username+" is online")
+                socket.emit('online_status',true);
             }
-        });
-        console.log(response.data);
+        }
+
+        else{
+            socket.emit('online_status', false)
+        }
     })
 
-    socket.on('disconnect', ()=>{
+    socket.on('online',async data => {
+        //save the socket.id to mongo db
+        try {
+            const currentUser = await userModel.findById(data.userid);
+            if (currentUser) {
+                currentUser.socket_id = socket.id;
+                await currentUser.save();
+                console.log(`Socket ID ${socket.id} saved for user ${currentUser.username}`);
+            } else {
+                console.log(`User with ID ${data.userid} not found.`);
+            }
+        } catch (error) {
+            console.error("Error saving socket ID:", error);
+        }
+    })
+
+    socket.on('disconnect', async()=>{
         console.log("User with ID : "+socket.id+" disconnected :(");
+        socket.broadcast.emit('offline', { data : 'your data' });
+        try {
+            const userWithSocketId = await userModel.findOne({ socket_id: socket.id });
+            if (userWithSocketId) {
+                userWithSocketId.socket_id = "";
+                await userWithSocketId.save();
+                console.log(`Socket ID removed for user ${userWithSocketId.username}`);
+            } else {
+                console.log(`No user found with Socket ID ${socket.id}`);
+            }
+        } catch (error) {
+            console.error("Error removing socket ID:", error);
+        }
+
     })
 })

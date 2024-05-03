@@ -3,6 +3,7 @@ const userSchema = new mongoose.Schema({
     username : String,
     id : String,
     profileImage : String,
+    socket_id : String
 
 })
 
