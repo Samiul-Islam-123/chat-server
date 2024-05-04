@@ -8,6 +8,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const { default: axios } = require('axios');
 const userModel = require('./Database/Models/UserModel');
+const ChatModel = require('./Database/Models/ChatModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,7 +43,7 @@ server.listen(PORT, async()=>{
 
 io.on('connection', (socket)=>{
     console.log("New user connected :)");
-
+    socket.broadcast.emit('online_status', true);
     socket.on('get-online-status', async(data)=>{
         //console.log(data)
         const OnlineUser = await userModel.findOne({
@@ -78,7 +79,46 @@ io.on('connection', (socket)=>{
         }
     })
 
-    socket.broadcast.emit('online_status', true);
+
+    //event to send message (in real time)
+    socket.on('send-message',async data=>{
+        //console.log(data)
+        //find the Target User socket id from database
+        const TargetUser = await userModel.findOne({
+            _id : data.targetUserID
+        })
+        if(TargetUser){
+            const TargetUserSocketID = TargetUser.socket_id;
+
+            
+            
+            const fromUser = data.fromUserID;
+            const targetUser = data.targetUserID;
+            
+            let MessageObject = {
+                from : fromUser,
+                to : targetUser,
+                content : data.content,
+                seen : false
+            }
+            //finding previous chatData
+            const ChatData = await ChatModel.findOne({
+                Users : {
+                    $all : [fromUser, targetUser]
+                }
+            })
+            
+            if(ChatData){
+                ChatData.Chats.push(MessageObject)
+                await ChatData.save();
+                io.to(TargetUserSocketID).emit('private-message', MessageObject)
+            }
+
+
+        }
+
+        
+    })
 
 
     socket.on('disconnect', async()=>{

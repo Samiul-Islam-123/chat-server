@@ -135,5 +135,18 @@ GET_Routes.get('/get-chats', async (req, res) => {
     }
 })
 
+// GET_Routes.get('/user-data/:ID',async (req,res)=>{
+//     try{
+//         const UserData = await userModel.findOne({
+//             _id : req.params.ID
+//         });
+//         if(UserData){
+//             res.json({
+//                 success : true
+//             })
+//         }
+//     }
+// } )
+
 
 module.exports = GET_Routes;
