@@ -78,9 +78,12 @@ io.on('connection', (socket)=>{
         }
     })
 
+    socket.broadcast.emit('online_status', true);
+
+
     socket.on('disconnect', async()=>{
         console.log("User with ID : "+socket.id+" disconnected :(");
-        socket.broadcast.emit('offline', { data : 'your data' });
+        socket.broadcast.emit('offline', false);
         try {
             const userWithSocketId = await userModel.findOne({ socket_id: socket.id });
             if (userWithSocketId) {
