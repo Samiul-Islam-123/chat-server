@@ -95,12 +95,6 @@ io.on('connection', (socket)=>{
             const fromUser = data.fromUserID;
             const targetUser = data.targetUserID;
             
-            let MessageObject = {
-                from : fromUser,
-                to : targetUser,
-                content : data.content,
-                seen : false
-            }
             //finding previous chatData
             const ChatData = await ChatModel.findOne({
                 Users : {
@@ -109,15 +103,42 @@ io.on('connection', (socket)=>{
             })
             
             if(ChatData){
+                let MessageObject = {
+                    from : fromUser,
+                    to : targetUser,
+                    content : data.content,
+                    seen : false,
+                    timestamp : new Date(),
+                    chatID : ChatData.Chats[ChatData.Chats.length-1]._id
+                }
                 ChatData.Chats.push(MessageObject)
                 await ChatData.save();
                 io.to(TargetUserSocketID).emit('private-message', MessageObject)
+                socket.emit('private-message-sent', MessageObject)
+                
             }
 
 
         }
 
         
+    })
+
+    //Still under test
+    socket.on('mark-seen',async chatID=>{
+        const CurrentChat = await ChatModel.findOne({
+            'Chats._id': chatID
+        })
+        if (CurrentChat) {
+            if(CurrentChat.Chats.length > 0){
+                CurrentChat.Chats[CurrentChat.Chats.length-1].seen = true;
+                await CurrentChat.save()
+                
+            }
+        } else {
+            console.log('Chat not found.');
+        }
+
     })
 
 
